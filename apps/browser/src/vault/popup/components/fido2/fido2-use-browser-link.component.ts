@@ -71,15 +71,15 @@ export class Fido2UseBrowserLinkComponent {
   protected async abort(excludeDomain = true) {
     const sessionData = await firstValueFrom(this.fido2PopoutSessionData$);
 
-    if (excludeDomain) {
-      await this.handleDomainExclusion(sessionData.senderUrl);
-      // Give the user a chance to see the toast before closing the popout.
-      setTimeout(() => {
-        this.abortSession(sessionData.sessionId);
-      }, 2000);
-    } else {
+    if (!excludeDomain) {
       this.abortSession(sessionData.sessionId);
+      return;
     }
+
+    await this.handleDomainExclusion(sessionData.senderUrl);
+    // Give the user a chance to see the toast before closing the popout.
+    await Utils.delay(2000);
+    this.abortSession(sessionData.sessionId);
   }
 
   /**
@@ -100,7 +100,7 @@ export class Fido2UseBrowserLinkComponent {
     );
   }
 
-  private async abortSession(sessionId: string) {
+  private abortSession(sessionId: string) {
     BrowserFido2UserInterfaceSession.abortPopout(sessionId, true);
   }
 }
