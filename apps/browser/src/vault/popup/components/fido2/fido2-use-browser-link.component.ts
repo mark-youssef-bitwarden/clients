@@ -38,6 +38,7 @@ import {
   ],
 })
 export class Fido2UseBrowserLinkComponent {
+  showOverlay: boolean = false;
   isOpen = false;
   overlayPosition: ConnectedPosition[] = [
     {
@@ -48,6 +49,7 @@ export class Fido2UseBrowserLinkComponent {
       offsetY: 5,
     },
   ];
+
   protected fido2PopoutSessionData$ = fido2PopoutSessionData$();
 
   constructor(
@@ -69,13 +71,15 @@ export class Fido2UseBrowserLinkComponent {
    * @param excludeDomain - Identifies if the domain should be excluded from future FIDO2 prompts.
    */
   protected async abort(excludeDomain = true) {
+    this.close();
     const sessionData = await firstValueFrom(this.fido2PopoutSessionData$);
 
     if (!excludeDomain) {
       this.abortSession(sessionData.sessionId);
       return;
     }
-
+    // Show overlay to prevent the user from interacting with the page.
+    this.showOverlay = true;
     await this.handleDomainExclusion(sessionData.senderUrl);
     // Give the user a chance to see the toast before closing the popout.
     await Utils.delay(2000);
@@ -87,11 +91,15 @@ export class Fido2UseBrowserLinkComponent {
    * @param uri - The domain uri to exclude from future FIDO2 prompts.
    */
   private async handleDomainExclusion(uri: string) {
+    const exisitingDomains = await this.stateService.getNeverDomains();
+
     const validDomain = Utils.getHostname(uri);
-    const validDomainObj: { [name: string]: null } = {
-      [validDomain]: null,
+    const savedDomains: { [name: string]: unknown } = {
+      ...exisitingDomains,
     };
-    this.stateService.setNeverDomains(validDomainObj);
+    savedDomains[validDomain] = null;
+
+    this.stateService.setNeverDomains(savedDomains);
 
     this.platformUtilsService.showToast(
       "success",
