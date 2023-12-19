@@ -251,7 +251,6 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
         plan.type !== PlanType.Custom &&
         (!businessOwnedIsChecked || plan.canBeUsedByBusiness) &&
         (this.showFree || plan.product !== ProductType.Free) &&
-        this.planIsEnabled(plan) &&
         (plan.isAnnual ||
           plan.product === ProductType.Free ||
           plan.product === ProductType.TeamsStarter) &&
